@@ -1,4 +1,4 @@
-import importlib.resources
+from importlib import resources
 
 from PyQt5 import QtWebEngineWidgets, QtWidgets, uic, QtCore, QtGui
 
@@ -22,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, controller=None):
         super().__init__()
         self._controller = controller
-        with importlib.resources.path('tritki.gui', 'mainwindow.ui') as pth:
+        with resources.path('tritki.gui', 'mainwindow.ui') as pth:
             uic.loadUi(pth, self)
         self._initialize()
         self.show()

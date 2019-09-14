@@ -1,8 +1,7 @@
-import sys
+from tritki.gui import run_gui
 
-from PyQt5 import QtWidgets
-
-from tritki.gui import mainwindow
+if __name__ == '__main__':
+    run_gui()
 
 # import importlib.resources
 # import pathlib
@@ -57,6 +56,3 @@ from tritki.gui import mainwindow
 #         self.page_view.setHtml(html)
 #         self.page_edit.setPlainText(data)
 
-app = QtWidgets.QApplication(sys.argv)
-window = mainwindow.MainWindow()
-app.exec_()
