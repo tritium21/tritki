@@ -1,7 +1,8 @@
-from tritki.gui import run_gui
+import tritki.models
 
-if __name__ == '__main__':
-    run_gui()
+engine, Session = tritki.models.get_engine()
+session = Session()
+article = session.query(tritki.models.Article).first()
 
 # import importlib.resources
 # import pathlib

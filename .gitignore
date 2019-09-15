@@ -3,3 +3,4 @@ dev/
 env/
 test_data/
 __pycache__/
+*.db

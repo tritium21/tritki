@@ -105,7 +105,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="documentMode">
         <bool>false</bool>
@@ -156,7 +156,7 @@
               </font>
              </property>
              <property name="text">
-              <string>**B**</string>
+              <string>B</string>
              </property>
             </widget>
            </item>
@@ -168,7 +168,7 @@
               </font>
              </property>
              <property name="text">
-              <string>*I*</string>
+              <string>I</string>
              </property>
             </widget>
            </item>
@@ -180,7 +180,7 @@
               </font>
              </property>
              <property name="text">
-              <string>~~S~~</string>
+              <string>S</string>
              </property>
             </widget>
            </item>
@@ -251,34 +251,17 @@
              </property>
             </spacer>
            </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QPlainTextEdit" name="page_edit"/>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="edit_save_layout">
            <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="edit_save">
+            <widget class="QToolButton" name="edit_save">
              <property name="text">
               <string>Save</string>
              </property>
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QPlainTextEdit" name="page_edit"/>
          </item>
         </layout>
        </widget>
