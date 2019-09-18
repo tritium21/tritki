@@ -105,7 +105,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="documentMode">
         <bool>false</bool>
@@ -169,18 +169,6 @@
              </property>
              <property name="text">
               <string>I</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="edit_strike">
-             <property name="font">
-              <font>
-               <strikeout>true</strikeout>
-              </font>
-             </property>
-             <property name="text">
-              <string>S</string>
              </property>
             </widget>
            </item>
