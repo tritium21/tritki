@@ -1,14 +1,10 @@
 import sys
 
-import tritki.exceptions
+from PyQt5 import QtWidgets
 
+from tritki.gui import mainwindow
 
-def run_gui():
-    try:
-        from PyQt5 import QtWidgets
-    except ImportError as e:
-        raise tritki.exceptions.UIError("PyQt5 not installed") from e
-    from tritki.gui import mainwindow
-    app = QtWidgets.QApplication(sys.argv)
+def run_gui(argv=sys.argv):
+    app = QtWidgets.QApplication(argv)
     window = mainwindow.MainWindow()
     app.exec_()

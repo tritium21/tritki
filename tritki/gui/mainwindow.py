@@ -1,7 +1,7 @@
 try:
     from importlib import resources
 except ImportError:
-    import importlib_resources as resources
+    import importlib_resources as resources  # python 3.6 :(
 
 from PyQt5 import QtWebEngineWidgets, QtWidgets, uic, QtCore, QtGui
 

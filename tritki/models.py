@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 
-from sqlalchemy import Column, Integer, Unicode, UnicodeText, create_engine, DateTime
+from PyQt5.QtCore import QAbstractListModel
+
+from sqlalchemy import Column, Integer, Unicode, UnicodeText, create_engine, DateTime, event
 from sqlalchemy.sql import func
 from sqlalchemy.orm import configure_mappers, sessionmaker
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
@@ -30,6 +32,22 @@ class Article(Base):
             content = f"{content[:47]}..."
         return f"<{self.__class__.__module__}.{self.__class__.__qualname__} - {self.title!r}: {content!r}>"
 
+#TODO: make this thing work so i can update the gui on database update
+class ArticleViewModel(QAbstractListModel):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self._data = []
+
+    def rowCount(self, parent=QModelIndex()):
+        return super().rowCount(self, parent=parent)
+
+    def data(self, QModelIndex, role=Qt.DisplayRole):
+        return super().data(self, QModelIndex, role=role)
+
+    @event.listens_for(Article, 'after_delete')
+    def update(self, *args):
+        pass
+
 # class Media(Base):
 #     __versioned__ = {}
 #     path = Column(Unicode(512))
@@ -50,7 +68,7 @@ class DB:
     def connect(self):
         configure_mappers()
         self.engine = create_engine(self.uri)
-        self.Session = sessionmaker(self.engine)
+        self.Session = sessionmaker(self.engine, expire_on_commit=False)
         Base.metadata.create_all(self.engine)
 
     @contextmanager
