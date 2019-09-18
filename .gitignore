@@ -1,6 +1,7 @@
 .vscode/
 dev/
 env/
+env*/
 test_data/
 __pycache__/
 *.db

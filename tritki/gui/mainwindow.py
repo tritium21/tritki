@@ -1,4 +1,7 @@
-from importlib import resources
+try:
+    from importlib import resources
+except ImportError:
+    import importlib_resources as resources
 
 from PyQt5 import QtWebEngineWidgets, QtWidgets, uic, QtCore, QtGui
 
@@ -37,7 +40,6 @@ class MainWindow(QtWidgets.QMainWindow):
         signals = [
             (self.edit_bold.clicked, "edit_bold_clicked"),
             (self.edit_italic.clicked, "edit_italic_clicked"),
-            (self.edit_strike.clicked, "edit_strike_clicked"),
             (self.edit_quote.clicked, "edit_quote_clicked"),
             (self.edit_heading.currentIndexChanged, "edit_heading_currentIndexChanged"),
             (self.edit_link.clicked, "edit_link_clicked"),

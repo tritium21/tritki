@@ -261,7 +261,7 @@
           </layout>
          </item>
          <item>
-          <widget class="QPlainTextEdit" name="page_edit"/>
+          <widget class="SpellTextEdit" name="page_edit"/>
          </item>
         </layout>
        </widget>
@@ -335,6 +335,11 @@
    <extends>QWidget</extends>
    <header location="global">qwebengineview.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SpellTextEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header location="global">tritki.gui.spelledit</header>
   </customwidget>
  </customwidgets>
  <resources/>
