@@ -1,7 +1,5 @@
 from contextlib import contextmanager
 
-from PyQt5.QtCore import QAbstractListModel
-
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, create_engine, DateTime, event
 from sqlalchemy.sql import func
 from sqlalchemy.orm import configure_mappers, sessionmaker
@@ -32,21 +30,6 @@ class Article(Base):
             content = f"{content[:47]}..."
         return f"<{self.__class__.__module__}.{self.__class__.__qualname__} - {self.title!r}: {content!r}>"
 
-#TODO: make this thing work so i can update the gui on database update
-class ArticleViewModel(QAbstractListModel):
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        self._data = []
-
-    def rowCount(self, parent=QModelIndex()):
-        return super().rowCount(self, parent=parent)
-
-    def data(self, QModelIndex, role=Qt.DisplayRole):
-        return super().data(self, QModelIndex, role=role)
-
-    @event.listens_for(Article, 'after_delete')
-    def update(self, *args):
-        pass
 
 # class Media(Base):
 #     __versioned__ = {}
@@ -62,23 +45,32 @@ class DB:
         self.ready = False
         self.uri = uri
         self.engine = None
-        self.Session = None
+        self._make_session = None
+        self.session = None
         self.connect()
 
     def connect(self):
         configure_mappers()
         self.engine = create_engine(self.uri)
-        self.Session = sessionmaker(self.engine, expire_on_commit=False)
+        self._make_session = sessionmaker(self.engine, expire_on_commit=False)
+        self.session = self._make_session()
         Base.metadata.create_all(self.engine)
+        with self.session_scope() as session:
+            import lorem
+            for _ in range(5):
+                article = Article()
+                article.title = lorem.sentence()
+                article.content = lorem.text()
+                session.add(article)
+
 
     @contextmanager
     def session_scope(self):
-        session = self.Session()
         try:
-            yield session
-            session.commit()
+            yield self.session
+            self.session.commit()
         except:
-            session.rollback()
+            self.session.rollback()
             raise
-        finally:
-            session.close()
+        # finally:
+            # session.close()

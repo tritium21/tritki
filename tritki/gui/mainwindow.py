@@ -4,6 +4,8 @@ except ImportError:
     import importlib_resources as resources  # python 3.6 :(
 
 from PyQt5 import QtWebEngineWidgets, QtWidgets, uic, QtCore, QtGui
+from tritki.gui.alchemical import SqlAlchemyTableModel
+from tritki.models import Article
 
 _headings = (
     ("Normal", 0),
@@ -22,15 +24,23 @@ def _default(name):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, controller=None):
+    def __init__(self, app=None):
         super().__init__()
-        self._controller = controller
+        self.app = app
         with resources.path('tritki.gui', 'mainwindow.ui') as pth:
             uic.loadUi(pth, self)
         self._initialize()
         self.show()
 
     def _initialize(self):
+        model = SqlAlchemyTableModel(
+            self.app.db.session,
+            Article,
+            [("Title", Article.title, "title", {})],
+        )
+        self.article_list.setModel(model)
+
+    def _initialize_old(self):
         for index, (text, data) in enumerate(_headings):
             self.edit_heading.insertItem(
                 index,
@@ -48,7 +58,7 @@ class MainWindow(QtWidgets.QMainWindow):
             (self.search_button.clicked, "search_button_clicked"),
             (self.new_article.clicked, "new_article_clicked"),
         ]
-        default_handler = getattr(self._controller, "default", _default("No handler"))
+        default_handler = getattr(self.app, "default", _default("No handler"))
         for signal, name in signals:
-            handler = getattr(self._controller, name, default_handler)
+            handler = getattr(self.app, name, default_handler)
             signal.connect(handler)

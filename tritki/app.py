@@ -12,9 +12,9 @@ class App:
         self.database_uri = None
         self.db = None
         self.triggers = set()
-        tritki.gui.run_gui(qt_args)
         if data_path is not None:
             self.load(data_path, create=create)
+        tritki.gui.run_gui(self, qt_args)
 
     def load(self, data_path, *, create=False):
         data_path = pathlib.Path(data_path).resolve(strict=not create)
