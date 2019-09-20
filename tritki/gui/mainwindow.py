@@ -33,32 +33,47 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show()
 
     def _initialize(self):
+        self.app.register_html(self.set_html)
+        self.app.register_plaintext(self.set_plaintext)
         model = SqlAlchemyTableModel(
             self.app.db.session,
             Article,
             [("Title", Article.title, "title", {})],
         )
         self.article_list.setModel(model)
+        self.article_list.selectionModel().selectionChanged.connect(self.printer)
 
-    def _initialize_old(self):
-        for index, (text, data) in enumerate(_headings):
-            self.edit_heading.insertItem(
-                index,
-                text,
-                userData=data,
-            )
-        signals = [
-            (self.edit_bold.clicked, "edit_bold_clicked"),
-            (self.edit_italic.clicked, "edit_italic_clicked"),
-            (self.edit_quote.clicked, "edit_quote_clicked"),
-            (self.edit_heading.currentIndexChanged, "edit_heading_currentIndexChanged"),
-            (self.edit_link.clicked, "edit_link_clicked"),
-            (self.edit_wikilink.clicked, "edit_wikilink_clicked"),
-            (self.edit_save.clicked, "edit_save_clicked"),
-            (self.search_button.clicked, "search_button_clicked"),
-            (self.new_article.clicked, "new_article_clicked"),
-        ]
-        default_handler = getattr(self.app, "default", _default("No handler"))
-        for signal, name in signals:
-            handler = getattr(self.app, name, default_handler)
-            signal.connect(handler)
+    def printer(self, new, old):
+        idx = next(iter(new.indexes()))
+        item = self.article_list.model().data(idx)
+        self.app.change_item(item)
+
+    def set_html(self, html):
+        self.page_view.setHtml(html)
+
+    def set_plaintext(self, plaintext, title):
+        self.edit_title.setText(title)
+        self.page_edit.setPlainText(plaintext)
+
+    # def _initialize_old(self):
+    #     for index, (text, data) in enumerate(_headings):
+    #         self.edit_heading.insertItem(
+    #             index,
+    #             text,
+    #             userData=data,
+    #         )
+    #     signals = [
+    #         (self.edit_bold.clicked, "edit_bold_clicked"),
+    #         (self.edit_italic.clicked, "edit_italic_clicked"),
+    #         (self.edit_quote.clicked, "edit_quote_clicked"),
+    #         (self.edit_heading.currentIndexChanged, "edit_heading_currentIndexChanged"),
+    #         (self.edit_link.clicked, "edit_link_clicked"),
+    #         (self.edit_wikilink.clicked, "edit_wikilink_clicked"),
+    #         (self.edit_save.clicked, "edit_save_clicked"),
+    #         (self.search_button.clicked, "search_button_clicked"),
+    #         (self.new_article.clicked, "new_article_clicked"),
+    #     ]
+    #     default_handler = getattr(self.app, "default", _default("No handler"))
+    #     for signal, name in signals:
+    #         handler = getattr(self.app, name, default_handler)
+    #         signal.connect(handler)

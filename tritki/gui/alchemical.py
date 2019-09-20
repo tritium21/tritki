@@ -112,7 +112,7 @@ class SqlAlchemyTableModel(QSqlTableModel):
     def columnCount(self, parent):
         return len(self.fields)
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return QVariant()
 
@@ -123,6 +123,11 @@ class SqlAlchemyTableModel(QSqlTableModel):
         name = self.fields[index.column()][2]
 
         return getattr(row, name)
+
+    def get_item(self, index):
+        if not index.isValid():
+            return None
+        return self.results[index.row()]
 
     def setData(self, index, value, role=None):
         row = self.results[index.row()]

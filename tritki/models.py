@@ -55,13 +55,13 @@ class DB:
         self._make_session = sessionmaker(self.engine, expire_on_commit=False)
         self.session = self._make_session()
         Base.metadata.create_all(self.engine)
-        with self.session_scope() as session:
-            import lorem
-            for _ in range(5):
-                article = Article()
-                article.title = lorem.sentence()
-                article.content = lorem.text()
-                session.add(article)
+        # with self.session_scope() as session:
+        #     import lorem
+        #     for _ in range(5):
+        #         article = Article()
+        #         article.title = lorem.sentence()
+        #         article.content = lorem.text()
+        #         session.add(article)
 
 
     @contextmanager

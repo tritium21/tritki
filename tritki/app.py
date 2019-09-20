@@ -2,7 +2,9 @@ import os
 import pathlib
 
 import tritki.models
+from tritki.models import Article
 import tritki.gui
+import tritki.render
 
 DATABASE_NAME = 'tritki.db'
 
@@ -11,7 +13,8 @@ class App:
         self.data_path = None
         self.database_uri = None
         self.db = None
-        self.triggers = set()
+        self._html_callbacks = []
+        self._plaintext_callbacks = []
         if data_path is not None:
             self.load(data_path, create=create)
         tritki.gui.run_gui(self, qt_args)
@@ -25,10 +28,19 @@ class App:
         self.db = tritki.models.DB(uri=self.database_uri)
         self.data_path = data_path
 
-    def execute_trigger(self):
-        for trigger in self.triggers:
-            trigger(self)
+    def register_html(self, callable_):
+        if callable(callable_):
+            self._html_callbacks.append(callable_)
 
-    def register_trigger(self, func):
-        if callable(func):
-            self.triggers.add(func)
+    def register_plaintext(self, callable_):
+        if callable(callable_):
+            self._plaintext_callbacks.append(callable_)
+    
+    def change_item(self, item):
+        with self.db.session_scope() as session:
+            article = session.query(Article).filter(Article.title == item).first()
+            html = tritki.render.render(article)
+            for callable_ in self._html_callbacks:
+                callable_(html)
+            for callable_ in self._plaintext_callbacks:
+                callable_(article.content, article.title)
