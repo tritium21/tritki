@@ -13,7 +13,5 @@
 # GUI
 
 * Rewrite `./tritki/gui/spelledit.py` to use a spelling library that supports Windows 64, and Python 3.7+ (currently uses pyenchant which supports Windows 32, and Python 3.6)
-
-# Logic
-
-* Everything
+* Wire up the 'New' button
+* Wire up the bold, italic, blockquote, and paragraph buttons
