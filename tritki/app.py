@@ -9,6 +9,7 @@ import tritki.gui
 import tritki.markdown
 
 DATABASE_NAME = 'tritki.db'
+INDEX_NAME = 'index'
 
 class App:
     def __init__(self, *, data_path=None, create=False, qt_args=None):
@@ -35,11 +36,13 @@ class App:
 
     def load(self, data_path, *, create=False):
         data_path = pathlib.Path(data_path).resolve(strict=not create)
+        index_path = (data_path / INDEX_NAME).resolve(strict=not create)
         if create:
             data_path.mkdir(parents=True)
+            index_path.mkdir(parents=True)
         db_path = (data_path / DATABASE_NAME).resolve(strict=not create)
         self.database_uri = db_path.as_uri().replace('file:', 'sqlite:')
-        self.db = tritki.models.DB(uri=self.database_uri)
+        self.db = tritki.models.DB(uri=self.database_uri, indexdir=index_path)
         if create:
             self.new(self.mainpage)
         self.data_path = data_path
