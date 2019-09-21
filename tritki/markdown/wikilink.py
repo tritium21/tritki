@@ -10,15 +10,13 @@ class WikiLinkExtension(Extension):
 
     def __init__(self, **kwargs):
         self.config = {
-            'html_class': [None, 'Callable returns HTML class for target.'],
-            'build_url': [None, 'Callable returns link for target.'],
+            'html_class': [lambda x: None, 'Callable returns HTML class for target.'],
+            'build_url': [lambda x: f"/{x}", 'Callable returns link for target.'],
         }
-
         super().__init__(**kwargs)
 
     def extendMarkdown(self, md):
         self.md = md
-
         # append to end of inline patterns
         WIKILINK_RE = r'\[\[([\w0-9_ -]+\|?.*?)\]\]'
         wikilinkPattern = WikiLinksInlineProcessor(WIKILINK_RE, self.getConfigs())
@@ -38,15 +36,9 @@ class WikiLinksInlineProcessor(InlineProcessor):
             text = text.strip()
             text = text or target
 
-            url = f"/{target}"
-            url_builder = self.config['build_url']
-            if url_builder:
-                url = url_builder(target)
+            url = self.config['build_url'](target)
 
-            html_class = None
-            class_builder = self.config['html_class']
-            if class_builder:
-                html_class = class_builder(target)
+            html_class = self.config['html_class'](target)
 
             a = etree.Element('a')
             a.text = text

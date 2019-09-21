@@ -41,6 +41,7 @@ class SqlAlchemyTableModel(QSqlTableModel):
         self.entity = entity
 
         self.results = None
+        self._row_map = None
         self.count = None
         self.sort = None
         self.filter = None
@@ -79,6 +80,7 @@ class SqlAlchemyTableModel(QSqlTableModel):
             q = q.filter(self.filter)
 
         self.results = q(self.entity).all()
+        self._row_map = {e.title: i for i, e in enumerate(self.results)}
         self.count = len(self.results)
         self.layoutChanged.emit()
 
@@ -128,6 +130,10 @@ class SqlAlchemyTableModel(QSqlTableModel):
         if not index.isValid():
             return None
         return self.results[index.row()]
+
+    def get_index(self, title):
+        if title in self._row_map:
+            return self.createIndex(self._row_map[title], 0)
 
     def setData(self, index, value, role=None):
         row = self.results[index.row()]
