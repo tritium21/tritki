@@ -30,16 +30,6 @@ class Article(Base):
             content = f"{content[:47]}..."
         return f"<{self.__class__.__module__}.{self.__class__.__qualname__} - {self.title!r}: {content!r}>"
 
-
-# class Media(Base):
-#     __versioned__ = {}
-#     path = Column(Unicode(512))
-#     storage_path = Column(Unicode(512))
-
-#     def __repr__(self):
-#         return f"<{self.__class__.__module__}.{self.__class__.__qualname__}: {self.path!r} -> {self.storage_path!r}>"
-
-
 class DB:
     def __init__(self, uri='sqlite:///test.db', *, connect=True):
         self.ready = False
@@ -55,14 +45,6 @@ class DB:
         self._make_session = sessionmaker(self.engine, expire_on_commit=False)
         self.session = self._make_session()
         Base.metadata.create_all(self.engine)
-        # with self.session_scope() as session:
-        #     import lorem
-        #     for _ in range(5):
-        #         article = Article()
-        #         article.title = lorem.sentence()
-        #         article.content = lorem.text()
-        #         session.add(article)
-
 
     @contextmanager
     def session_scope(self):
@@ -72,5 +54,3 @@ class DB:
         except:
             self.session.rollback()
             raise
-        # finally:
-            # session.close()
