@@ -13,7 +13,7 @@ DATABASE_NAME = 'tritki.db'
 INDEX_NAME = 'index'
 
 if getattr(sys, 'frozen', False):
-    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'tritki' / 'templates')
+    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'templates')
     LOADER = jinja2.FileSystemLoader(pth)
 else:
     LOADER = jinja2.PackageLoader('tritki', 'templates')
