@@ -91,7 +91,6 @@ class MainWindow(QtWidgets.QMainWindow):
             clear_button.deleteLater()
             article_list.show()
             search_button.show()
-            search_text.setText("")
 
         def item_clicked(item):
             self.switch_view()
@@ -101,12 +100,17 @@ class MainWindow(QtWidgets.QMainWindow):
         clear_button.clicked.connect(reset)
         search_list.itemDoubleClicked.connect(item_clicked)
         search_list.enterPressed.connect(item_clicked)
+        search_list.setStyleSheet("MListWidget {background-color: Gainsboro};");
 
         # this is where search sits!
         text = search_text.text()
         query = Article.search_query(text)
         items = [x.title for x in query]
         if not len(items):
+            pos = self.mapToGlobal(search_text.pos())
+            QtWidgets.QToolTip.showText(pos, "No results")
+            search_list.deleteLater()
+            clear_button.deleteLater()
             return
         search_list.addItems(items)
         search_list.item(0).setSelected(True)
