@@ -1,5 +1,6 @@
 import os
 import pathlib
+import sys
 
 import jinja2
 
@@ -11,11 +12,17 @@ import tritki.markdown
 DATABASE_NAME = 'tritki.db'
 INDEX_NAME = 'index'
 
+if getattr(sys, 'frozen', False):
+    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'tritki' / 'templates')
+    LOADER = jinja2.FileSystemLoader(pth)
+else:
+    LOADER = jinja2.PackageLoader('tritki', 'templates')
+
 class App:
     def __init__(self, *, data_path=None, create=False, qt_args=None):
         self.mainpage = 'Main Page'
         self.jinja_env = jinja2.Environment(
-            loader=jinja2.PackageLoader('tritki', 'templates'),
+            loader=LOADER,
             autoescape=jinja2.select_autoescape(
                 enabled_extensions=[],
                 disabled_extensions=['html'],

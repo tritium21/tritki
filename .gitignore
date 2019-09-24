@@ -1,4 +1,7 @@
 .vscode/
+dist/
+build/
+build_env/
 dev/
 env/
 env*/

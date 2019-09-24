@@ -3,7 +3,9 @@ try:
 except ImportError:
     import importlib_resources as resources  # python 3.6 :(
 
-from PyQt5 import QtWebEngineWidgets, QtWidgets, uic, QtCore, QtGui, QtWebEngineCore
+from functools import partial
+
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from tritki.gui.alchemical import SqlAlchemyTableModel
 from tritki.models import Article
 
@@ -20,6 +22,14 @@ a.external {
 }
 """
 
+class MListWidget(QtWidgets.QListWidget):
+    enterPressed = QtCore.pyqtSignal(QtWidgets.QListWidgetItem)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
+            self.enterPressed.emit(self.currentItem())
+        return super().keyPressEvent(event)
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, app=None):
         self._current_page = None
@@ -32,6 +42,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.navigate(self.app.mainpage)
 
     def _initialize(self):
+        # <temporary!>
+        self.article_viewport.setTabEnabled(
+            2,
+            False,
+        )
+        # </temporary!>
         self.app.register_html(self.set_html)
         self.app.register_plaintext(self.set_plaintext)
         self.app.register_navigate(self.navigate)
@@ -49,6 +65,132 @@ class MainWindow(QtWidgets.QMainWindow):
         self.delete_article.clicked.connect(self.do_delete_article)
         document = self.page_view.document()
         document.setDefaultStyleSheet(stylesheet)
+        self.page_edit.textCursor().setKeepPositionOnInsert(True)
+        self.edit_bold.clicked.connect(partial(self.inline_format, '**'))
+        self.edit_italic.clicked.connect(partial(self.inline_format, '*'))
+        self.edit_wikilink.clicked.connect(self.insert_wikilink)
+        self.edit_link.clicked.connect(self.insert_link)
+        self.new_article.clicked.connect(self.do_new_article)
+        self.search_button.clicked.connect(self.search_articles)
+        self.search_text.returnPressed.connect(self.search_button.click)
+
+    def search_articles(self):
+        search_text = self.search_text
+        search_button = self.search_button
+        article_list = self.article_list
+        al_layout = self.article_list_layout
+        s_layout = self.search_layout
+
+        search_list = MListWidget(self)
+        clear_button = QtWidgets.QPushButton("Clear Search", self)
+
+        def reset():
+            al_layout.replaceWidget(search_list, article_list)
+            s_layout.replaceWidget(clear_button, search_button)
+            search_list.deleteLater()
+            clear_button.deleteLater()
+            article_list.show()
+            search_button.show()
+            search_text.setText("")
+
+        def item_clicked(item):
+            self.switch_view()
+            self.app.navigate(item.text())
+            reset()
+
+        clear_button.clicked.connect(reset)
+        search_list.itemDoubleClicked.connect(item_clicked)
+        search_list.enterPressed.connect(item_clicked)
+
+        # this is where search sits!
+        text = search_text.text()
+        query = Article.search_query(text)
+        items = [x.title for x in query]
+        if not len(items):
+            return
+        search_list.addItems(items)
+        search_list.item(0).setSelected(True)
+        # that was where search sits
+
+        al_layout.replaceWidget(article_list, search_list)
+        s_layout.replaceWidget(search_button, clear_button)
+        search_list.setFocus()
+        article_list.hide()
+        search_button.hide()
+
+    def inline_format(self, format):
+        cursor = self.page_edit.textCursor()
+        data = cursor.selectedText()
+        cursor.insertText(f"{format}{data}{format}")
+        self.page_edit.setFocus()
+
+    def do_new_article(self):
+        target, status = QtWidgets.QInputDialog.getText(
+            self,
+            "New article name...",
+            "Name",
+        )
+        if not status:
+            return
+        self.app.new(target)
+        self._model.refresh()
+        self.app.navigate(target)
+        self.switch_view('edit')
+
+    def insert_link(self):
+        cursor = self.page_edit.textCursor()
+        name = cursor.selectedText()
+        ref = None
+        if not name.strip():
+            name, status = QtWidgets.QInputDialog.getText(
+                self,
+                "Name for link",
+                "Name",
+                text=ref
+            )
+            if not status:
+                return
+        ref, status = QtWidgets.QInputDialog.getText(
+            self,
+            "Target for link",
+            "Target",
+            text="https://"
+        )
+        if not status:
+            return
+        cursor.insertText(f"[{name}]({ref})")
+        self.page_edit.setFocus()
+
+    def insert_wikilink(self):
+        cursor = self.page_edit.textCursor()
+        ref = cursor.selectedText()
+        name = None
+        if not ref.strip():
+            items = [i.title for i in self._model.results]
+            ref, status = QtWidgets.QInputDialog.getItem(
+                self,
+                "Select an article",
+                "Article",
+                items,
+                0,
+                True,
+            )
+            if not status:
+                return
+            name, status = QtWidgets.QInputDialog.getText(
+                self,
+                "Name for link",
+                "Name",
+                text=ref
+            )
+            if not status:
+                return
+            if ref == name:
+                name = None
+        data = '|'.join(x for x in [ref, name] if x)
+        cursor.insertText(f"[[{data}]]")
+        self.page_edit.setFocus()
+        
 
     def switch_view(self, view='view'):
         if view == 'edit':

@@ -189,30 +189,6 @@
             </widget>
            </item>
            <item>
-            <widget class="Line" name="tool_separator_1">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="edit_quote">
-             <property name="text">
-              <string>&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="edit_heading"/>
-           </item>
-           <item>
-            <widget class="Line" name="tool_separator_2">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QToolButton" name="edit_wikilink">
              <property name="font">
               <font>
