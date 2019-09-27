@@ -99,8 +99,9 @@ class App:
         if callable(callable_):
             self._navigate_callbacks.append(callable_)
 
-    def navigate(self, item):
-        self.last_page(item)
+    def navigate(self, item=None):
+        if item is None:
+            item = self.config['last_page']
         for callable_ in self._navigate_callbacks:
             callable_(item)
 
@@ -110,6 +111,7 @@ class App:
             self.update_page(article)
 
     def update_page(self, article):
+        self.last_page(article.title)
         html = self.render(article)
         for callable_ in self._html_callbacks:
             callable_(html)

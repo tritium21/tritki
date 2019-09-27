@@ -39,7 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
             uic.loadUi(pth, self)
         self._initialize()
         self.show()
-        self.navigate(self.app.config['last_page'])
+        self.app.navigate()
 
     def _initialize(self):
         # <temporary!>
@@ -74,6 +74,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.search_button.clicked.connect(self.search_articles)
         self.search_text.returnPressed.connect(self.search_button.click)
 
+    # Article list methods
     def search_articles(self):
         search_text = self.search_text
         search_button = self.search_button
@@ -121,11 +122,35 @@ class MainWindow(QtWidgets.QMainWindow):
         article_list.hide()
         search_button.hide()
 
-    def inline_format(self, format):
-        cursor = self.page_edit.textCursor()
-        data = cursor.selectedText()
-        cursor.insertText(f"{format}{data}{format}")
-        self.page_edit.setFocus()
+    def do_delete_article(self):
+        if not self._selmodel.hasSelection():
+            return
+        index = self._selmodel.currentIndex()
+        item = self._model.get_item(index)
+        if item.title == self.app.mainpage:
+            return
+        mbox = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            f"Delete \"{item.title}\"?",
+            f"Are you sure you wish to delete \"{item.title}\"?",
+            buttons=QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No
+        )
+        mbox.setDefaultButton(QtWidgets.QMessageBox.No)
+        retval = mbox.exec_()
+        if retval == QtWidgets.QMessageBox.Yes:
+            self.app.delete(item)
+            self._model.refresh()
+        else:
+            return
+        if not self._selmodel.hasSelection():
+            print("no current index after delete?")
+            return
+        newindex = self._selmodel.currentIndex()
+        if newindex.row() == index.row():
+            self.app.navigate(self.app.mainpage)
+            return
+        item = self._model.data(newindex)
+        self.app.change_item(item)
 
     def do_new_article(self):
         target, status = QtWidgets.QInputDialog.getText(
@@ -139,6 +164,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self._model.refresh()
         self.app.navigate(target)
         self.switch_view('edit')
+
+
+    # Editor methods
+    def inline_format(self, format):
+        cursor = self.page_edit.textCursor()
+        data = cursor.selectedText()
+        cursor.insertText(f"{format}{data}{format}")
+        self.page_edit.setFocus()
 
     def insert_link(self):
         cursor = self.page_edit.textCursor()
@@ -194,7 +227,13 @@ class MainWindow(QtWidgets.QMainWindow):
         cursor.insertText(f"[[{data}]]")
         self.page_edit.setFocus()
         
+    def save(self):
+        content = self.page_edit.toPlainText()
+        title = self.edit_title.text()
+        id = self._current_page
+        self.app.save(id, content, title)
 
+    # Navigation methods - major refactor needed.
     def switch_view(self, view='view'):
         if view == 'edit':
             widget = self.edit_tab
@@ -222,12 +261,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.edit_title.setText(title)
         self.page_edit.setPlainText(plaintext)
 
-    def save(self):
-        content = self.page_edit.toPlainText()
-        title = self.edit_title.text()
-        id = self._current_page
-        self.app.save(id, content, title)
-
     def link_clicked(self, url):
         scheme = url.scheme()
         if scheme not in ('view', 'edit'):
@@ -242,32 +275,3 @@ class MainWindow(QtWidgets.QMainWindow):
             self.app.navigate(target)
             self.switch_view('edit')
 
-    def do_delete_article(self):
-        if not self._selmodel.hasSelection():
-            return
-        index = self._selmodel.currentIndex()
-        item = self._model.get_item(index)
-        if item.title == self.app.mainpage:
-            return
-        mbox = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Warning,
-            f"Delete \"{item.title}\"?",
-            f"Are you sure you wish to delete \"{item.title}\"?",
-            buttons=QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No
-        )
-        mbox.setDefaultButton(QtWidgets.QMessageBox.No)
-        retval = mbox.exec_()
-        if retval == QtWidgets.QMessageBox.Yes:
-            self.app.delete(item)
-            self._model.refresh()
-        else:
-            return
-        if not self._selmodel.hasSelection():
-            print("no current index after delete?")
-            return
-        newindex = self._selmodel.currentIndex()
-        if newindex.row() == index.row():
-            self.app.navigate(self.app.mainpage)
-            return
-        item = self._model.data(newindex)
-        self.app.change_item(item)
