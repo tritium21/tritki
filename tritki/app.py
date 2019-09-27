@@ -2,7 +2,9 @@ import os
 import pathlib
 import sys
 
+import appdirs
 import jinja2
+import toml
 
 import tritki.models
 from tritki.models import Article
@@ -12,6 +14,22 @@ import tritki.markdown
 DATABASE_NAME = 'tritki.db'
 INDEX_NAME = 'index'
 
+
+class GlobalState:
+    def __init__(self):
+        self.appdirs = appdirs.AppDirs('tritki')
+        self.state_file = pathlib.Path(self.appdirs.user_config_dir) / 'state.toml'
+
+    def get_state(self):
+        if not self.state_file.exists():
+            return {}
+        return toml.loads(self.state_file.read_text(encoding="UTF-8"))
+
+    def set_state(self, obj):
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        self.state_file.write_text(toml.dumps(obj), encoding="UTF-8")
+
+
 if getattr(sys, 'frozen', False):
     pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'templates')
     LOADER = jinja2.FileSystemLoader(pth)
@@ -20,6 +38,7 @@ else:
 
 class App:
     def __init__(self, *, data_path=None, create=False, qt_args=None):
+        self.global_state = GlobalState()
         self.mainpage = 'Main Page'
         self.jinja_env = jinja2.Environment(
             loader=LOADER,
@@ -31,28 +50,42 @@ class App:
             ),
         )
         self.markdown = tritki.markdown.Converter(self)
-        self.data_path = None
-        self.database_uri = None
-        self.db = None
+        if data_path is None:
+            data_path = self.global_state.get_state().get('data_path')
+        self.data_path = pathlib.Path(data_path).resolve(strict=not create)
+        self.global_state.set_state({'data_path': data_path})
+        self.config_path = (self.data_path / 'config.toml').resolve(strict=not create)
+        self.config = {
+            'database_uri': (self.data_path / DATABASE_NAME).resolve(strict=not create).as_uri().replace('file:', 'sqlite:'),
+            'index_path': str((self.data_path / INDEX_NAME).resolve(strict=not create)),
+            'last_page': self.mainpage,
+        }
+        if create:
+            self.config['index_path'].mkdir(parents=True)
+            self.write_config()
+        else:
+            self.config.update(self.read_config())
+        self.db = tritki.models.DB(**self.config)
+        if create:
+            self.new(self.mainpage)
         self._html_callbacks = []
         self._plaintext_callbacks = []
         self._navigate_callbacks = []
-        if data_path is not None:
-            self.load(data_path, create=create)
         tritki.gui.run_gui(self, qt_args)
 
-    def load(self, data_path, *, create=False):
-        data_path = pathlib.Path(data_path).resolve(strict=not create)
-        index_path = (data_path / INDEX_NAME).resolve(strict=not create)
-        if create:
-            data_path.mkdir(parents=True)
-            index_path.mkdir(parents=True)
-        db_path = (data_path / DATABASE_NAME).resolve(strict=not create)
-        self.database_uri = db_path.as_uri().replace('file:', 'sqlite:')
-        self.db = tritki.models.DB(uri=self.database_uri, indexdir=index_path)
-        if create:
-            self.new(self.mainpage)
-        self.data_path = data_path
+    def search(self, term):
+        query = Article.search_query(term)
+        return [x.title for x in query]
+
+    def write_config(self):
+        self.config_path.write_text(toml.dumps(self.config), encoding="UTF-8")
+
+    def read_config(self):
+        return toml.loads(self.config_path.read_text(encoding="UTF-8"))
+
+    def last_page(self, item):
+        self.config['last_page'] = item
+        self.write_config()
 
     def register_html(self, callable_):
         if callable(callable_):
@@ -67,6 +100,7 @@ class App:
             self._navigate_callbacks.append(callable_)
 
     def navigate(self, item):
+        self.last_page(item)
         for callable_ in self._navigate_callbacks:
             callable_(item)
 

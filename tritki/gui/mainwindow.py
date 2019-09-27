@@ -39,7 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
             uic.loadUi(pth, self)
         self._initialize()
         self.show()
-        self.navigate(self.app.mainpage)
+        self.navigate(self.app.config['last_page'])
 
     def _initialize(self):
         # <temporary!>
@@ -53,8 +53,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.app.register_navigate(self.navigate)
         self.article_list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self._model = model = SqlAlchemyTableModel(
-            self.app.db.session,
-            Article,
+            self.app.db.session,  # Need to fix this - too coupled
+            Article,  # and this.
             [("Title", Article.title, "title", {})],
         )
         self.article_list.setModel(model)
@@ -104,8 +104,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # this is where search sits!
         text = search_text.text()
-        query = Article.search_query(text)
-        items = [x.title for x in query]
+        items = self.app.search(text)
         if not len(items):
             pos = self.mapToGlobal(search_text.pos())
             QtWidgets.QToolTip.showText(pos, "No results")
@@ -211,9 +210,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def selection_changed(self, new, old):
         idx = next(iter(new.indexes()))
-        ()
         item = self._model.data(idx)
         self.app.change_item(item)
+        self.switch_view()
 
     def set_html(self, html):
         self.page_view.setHtml(html)

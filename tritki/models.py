@@ -30,23 +30,15 @@ class Article(Base):
         return f"<{self.__class__.__module__}.{self.__class__.__qualname__} - {self.title!r}: {content!r}>"
 
 class DB:
-    def __init__(self, uri='sqlite:///test.db', indexdir='.'):
-        self.ready = False
-        self.uri = uri
-        self.engine = None
-        self._make_session = None
-        self.session = None
-        self.indexdir = indexdir
-        self.index = None
-        self.connect()
-
-    def connect(self):
+    def __init__(self, database_uri='sqlite:///test.db', index_path='.', **args):
+        self.database_uri = database_uri
+        self.index_path = index_path
         configure_mappers()
-        self.engine = create_engine(self.uri)
+        self.engine = create_engine(self.database_uri)
         self._make_session = sessionmaker(self.engine, autoflush=True, expire_on_commit=True)
         self.session = self._make_session()
         Base.metadata.create_all(self.engine)
-        self.index = IndexService(whoosh_base=self.indexdir, session=self.session)
+        self.index = IndexService(whoosh_base=self.index_path, session=self.session)
         self.index.register_class(Article)
 
     @contextmanager
