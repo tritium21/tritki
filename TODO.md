@@ -1,6 +1,11 @@
 # TODO
 
 * import and export of data
+  * also export rendered html suitable for uploading
+* Global state manager (in progress)
+  * store list of known wikis
+  * store last accessed wiki (currently does, in the jankiest way possible)
+  * this is where a file menu starts making sense
 
 ## Storage
 
@@ -17,6 +22,7 @@
   * app object grow an all articles method, rewrite model to call that, drop all sqlalchemy specific code
   * add search facilities to the app object, rewire gui to use that instead of the index directly
 * Rewrite `./tritki/gui/alchemical.py` to not use QtSql
+* Autosave edits.
 
 ## History
 
