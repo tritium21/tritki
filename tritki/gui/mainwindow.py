@@ -1,7 +1,5 @@
 from importlib import resources
 
-from functools import partial
-
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from tritki.gui.alchemical import SqlAlchemyTableModel
 from tritki.models import Article
@@ -48,6 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.app.register_html(self.set_html)
         self.app.register_plaintext(self.set_plaintext)
         self.app.register_navigate(self.navigate)
+        self.edit_tab.spelling_provider = self.app.spelling_provider
         self.article_list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self._model = model = SqlAlchemyTableModel(
             self.app.db.session,  # Need to fix this - too coupled
@@ -57,20 +56,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.article_list.setModel(model)
         self._selmodel = self.article_list.selectionModel()
         self._selmodel.selectionChanged.connect(self.selection_changed)
-        self.edit_save.clicked.connect(self.save)
         self.page_view.anchorClicked.connect(self.link_clicked)
         self.delete_article.clicked.connect(self.do_delete_article)
         document = self.page_view.document()
         document.setDefaultStyleSheet(stylesheet)
-        self.page_edit.textCursor().setKeepPositionOnInsert(True)
-        self.page_edit.spelling_provider = self.app.spelling_provider
-        self.edit_bold.clicked.connect(partial(self.inline_format, '**'))
-        self.edit_italic.clicked.connect(partial(self.inline_format, '*'))
-        self.edit_wikilink.clicked.connect(self.insert_wikilink)
-        self.edit_link.clicked.connect(self.insert_link)
         self.new_article.clicked.connect(self.do_new_article)
         self.search_button.clicked.connect(self.search_articles)
         self.search_text.returnPressed.connect(self.search_button.click)
+        self.edit_tab.save.connect(self.save)
+
+    def save(self, content, title):
+        self.app.save(self._current_page, content, title)
 
     # Article list methods
     def search_articles(self):
@@ -164,73 +160,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.switch_view('edit')
 
 
-    # Editor methods
-    def inline_format(self, format):
-        cursor = self.page_edit.textCursor()
-        data = cursor.selectedText()
-        cursor.insertText(f"{format}{data}{format}")
-        self.page_edit.setFocus()
-
-    def insert_link(self):
-        cursor = self.page_edit.textCursor()
-        name = cursor.selectedText()
-        ref = None
-        if not name.strip():
-            name, status = QtWidgets.QInputDialog.getText(
-                self,
-                "Name for link",
-                "Name",
-                text=ref
-            )
-            if not status:
-                return
-        ref, status = QtWidgets.QInputDialog.getText(
-            self,
-            "Target for link",
-            "Target",
-            text="https://"
-        )
-        if not status:
-            return
-        cursor.insertText(f"[{name}]({ref})")
-        self.page_edit.setFocus()
-
-    def insert_wikilink(self):
-        cursor = self.page_edit.textCursor()
-        ref = cursor.selectedText()
-        name = None
-        if not ref.strip():
-            items = [i.title for i in self._model.results]
-            ref, status = QtWidgets.QInputDialog.getItem(
-                self,
-                "Select an article",
-                "Article",
-                items,
-                0,
-                True,
-            )
-            if not status:
-                return
-            name, status = QtWidgets.QInputDialog.getText(
-                self,
-                "Name for link",
-                "Name",
-                text=ref
-            )
-            if not status:
-                return
-            if ref == name:
-                name = None
-        data = '|'.join(x for x in [ref, name] if x)
-        cursor.insertText(f"[[{data}]]")
-        self.page_edit.setFocus()
-        
-    def save(self):
-        content = self.page_edit.toPlainText()
-        title = self.edit_title.text()
-        id = self._current_page
-        self.app.save(id, content, title)
-
     # Navigation methods - major refactor needed.
     def switch_view(self, view='view'):
         if view == 'edit':
@@ -256,8 +185,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def set_plaintext(self, id, plaintext, title):
         self._current_page = id
-        self.edit_title.setText(title)
-        self.page_edit.setPlainText(plaintext)
+        self.edit_tab.setTitle(title)
+        self.edit_tab.setPlainText(plaintext)
 
     def link_clicked(self, url):
         scheme = url.scheme()

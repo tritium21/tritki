@@ -16,13 +16,12 @@
 
 ## GUI
 
-* Rewrite `./tritki/gui/spelltextedit.py` to use a spelling library that supports Windows 64, and Python 3.7+ (currently uses pyenchant which supports Windows 32, and Python 3.6)
-  * Now that whoosh is being used, wire spell edit to that?
 * Rewrite gui and app objects so that gui only interacts with methods directly on the app object.  This will suck.
   * app object grow an all articles method, rewrite model to call that, drop all sqlalchemy specific code
   * add search facilities to the app object, rewire gui to use that instead of the index directly
 * Rewrite `./tritki/gui/alchemical.py` to not use QtSql
 * Autosave edits.
+  * Maybe not?
 
 ## History
 
