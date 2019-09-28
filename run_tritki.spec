@@ -9,10 +9,14 @@ a = Analysis(['run_tritki.py'],
              datas=[
                  ('tritki\\data\\__init__.py', 'tritki\\data'),
                  ('tritki\\data\\mainwindow.ui', 'tritki\\data'),
+                 ('tritki\\data\\markdown_editor.ui', 'tritki\\data'),
                  ('tritki\\data\\words.txt', 'tritki\\data'),
                  ('tritki\\data\\templates\\', 'tritki\\data\\templates')
              ],
-             hiddenimports=['tritki.gui.spelltextedit'],
+             hiddenimports=[
+                 'tritki.gui.spelltextedit',
+                 'tritki.gui.markdown',
+             ],
              hookspath=[],
              runtime_hooks=[],
              excludes=[
