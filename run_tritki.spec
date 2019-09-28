@@ -7,8 +7,10 @@ a = Analysis(['run_tritki.py'],
              pathex=['C:\\devel\\tritki'],
              binaries=[],
              datas=[
-                 ('tritki\\gui\\mainwindow.ui', 'tritki\\gui'),
-                 ('tritki\\templates\\', 'templates')
+                 ('tritki\\data\\__init__.py', 'tritki\\data'),
+                 ('tritki\\data\\mainwindow.ui', 'tritki\\data'),
+                 ('tritki\\data\\words.txt', 'tritki\\data'),
+                 ('tritki\\data\\templates\\', 'tritki\\data\\templates')
              ],
              hiddenimports=['tritki.gui.spelltextedit'],
              hookspath=[],

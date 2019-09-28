@@ -32,7 +32,7 @@ class GlobalState:
 
 
 if getattr(sys, 'frozen', False):
-    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'data' / 'templates')
+    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'tritki' / 'data' / 'templates')
     LOADER = jinja2.FileSystemLoader(pth)
 else:
     LOADER = jinja2.PackageLoader('tritki.data', 'templates')
