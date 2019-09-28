@@ -10,6 +10,7 @@ import tritki.models
 from tritki.models import Article
 import tritki.gui
 import tritki.markdown
+import tritki.spelling
 
 DATABASE_NAME = 'tritki.db'
 INDEX_NAME = 'index'
@@ -31,10 +32,10 @@ class GlobalState:
 
 
 if getattr(sys, 'frozen', False):
-    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'templates')
+    pth = str(pathlib.Path(sys._MEIPASS).resolve(strict=True) / 'data' / 'templates')
     LOADER = jinja2.FileSystemLoader(pth)
 else:
-    LOADER = jinja2.PackageLoader('tritki', 'templates')
+    LOADER = jinja2.PackageLoader('tritki.data', 'templates')
 
 class App:
     def __init__(self, *, data_path=None, create=False, qt_args=None):
@@ -50,6 +51,7 @@ class App:
             ),
         )
         self.markdown = tritki.markdown.Converter(self)
+        self.spelling_provider = tritki.spelling.Spelling()
         if data_path is None:
             data_path = self.global_state.get_state().get('data_path')
         self.data_path = pathlib.Path(data_path).resolve(strict=not create)

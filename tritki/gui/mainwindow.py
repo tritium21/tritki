@@ -1,7 +1,4 @@
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources  # python 3.6 :(
+from importlib import resources
 
 from functools import partial
 
@@ -35,7 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._current_page = None
         super().__init__()
         self.app = app
-        with resources.path('tritki.gui', 'mainwindow.ui') as pth:
+        with resources.path('tritki.data', 'mainwindow.ui') as pth:
             uic.loadUi(pth, self)
         self._initialize()
         self.show()
@@ -66,6 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         document = self.page_view.document()
         document.setDefaultStyleSheet(stylesheet)
         self.page_edit.textCursor().setKeepPositionOnInsert(True)
+        self.page_edit.spelling_provider = self.app.spelling_provider
         self.edit_bold.clicked.connect(partial(self.inline_format, '**'))
         self.edit_italic.clicked.connect(partial(self.inline_format, '*'))
         self.edit_wikilink.clicked.connect(self.insert_wikilink)

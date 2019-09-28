@@ -1,43 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""QPlainTextEdit With Inline Spell Check
-
-Original PyQt4 Version:
-    https://nachtimwald.com/2009/08/22/qplaintextedit-with-in-line-spell-check/
-
-Copyright 2009 John Schember
-Copyright 2018 Stephan Sokolow
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
-__license__ = 'MIT'
-__author__ = 'John Schember; Stephan Sokolow'
-__docformat__ = 'restructuredtext en'
-
 import sys
 
-import enchant
-from enchant import tokenize
-from enchant.errors import TokenizerNotFoundError
-
-# pylint: disable=no-name-in-module
 from PyQt5.Qt import Qt
 from PyQt5.QtCore import QEvent
 from PyQt5.QtGui import (QFocusEvent, QSyntaxHighlighter, QTextBlockUserData,
@@ -45,61 +7,28 @@ from PyQt5.QtGui import (QFocusEvent, QSyntaxHighlighter, QTextBlockUserData,
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QMenu,
                              QPlainTextEdit)
 
-try:
-    # pylint: disable=ungrouped-imports
-    from enchant.utils import trim_suggestions
-except ImportError:  # Older versions of PyEnchant as on *buntu 14.04
-    # pylint: disable=unused-argument
-    def trim_suggestions(word, suggs, maxlen, calcdist=None):
-        """API Polyfill for earlier versions of PyEnchant.
-
-        TODO: Make this actually do some sorting
-        """
-        return suggs[:maxlen]
-
 class SpellTextEdit(QPlainTextEdit):
-    """QPlainTextEdit subclass which does spell-checking using PyEnchant"""
+    def __init__(self, *args, spelling_provider=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sp = None
+        self.highlighter = SpellingHighlighter(self.document())
+        self.spelling_provider = spelling_provider
 
-    # Clamping value for words like "regex" which suggest so many things that
-    # the menu runs from the top to the bottom of the screen and spills over
-    # into a second column.
-    max_suggestions = 20
+    @property
+    def spelling_provider(self):
+        return self._sp
 
-    def __init__(self, *args):
-        QPlainTextEdit.__init__(self, *args)
-
-        # Start with a default dictionary based on the current locale.
-        self.highlighter = EnchantHighlighter(self.document())
-        self.highlighter.setDict(enchant.Dict())
+    @spelling_provider.setter
+    def spelling_provider(self, item):
+        self._sp = item
+        self.highlighter.spelling_provider = item
 
     def contextMenuEvent(self, event):
-        """Custom context menu handler to add a spelling suggestions submenu"""
         popup_menu = self.createSpellcheckContextMenu(event.pos())
         popup_menu.exec_(event.globalPos())
 
-        # Fix bug observed in Qt 5.2.1 on *buntu 14.04 LTS where:
-        # 1. The cursor remains invisible after closing the context menu
-        # 2. Keyboard input causes it to appear, but it doesn't blink
-        # 3. Switching focus away from and back to the window fixes it
-        self.focusInEvent(QFocusEvent(QEvent.FocusIn))
-
     def createSpellcheckContextMenu(self, pos):
-        """Create and return an augmented default context menu.
-
-        This may be used as an alternative to the QPoint-taking form of
-        ``createStandardContextMenu`` and will work on pre-5.5 Qt.
-        """
-        try:  # Recommended for Qt 5.5+ (Allows contextual Qt-provided entries)
-            menu = self.createStandardContextMenu(pos)
-        except TypeError:  # Before Qt 5.5
-            menu = self.createStandardContextMenu()
-
-        # Add a submenu for setting the spell-check language
-        menu.addSeparator()
-        menu.addMenu(self.createLanguagesMenu(menu))
-        menu.addMenu(self.createFormatsMenu(menu))
-
-        # Try to retrieve a menu of corrections for the right-clicked word
+        menu = self.createStandardContextMenu(pos)
         spell_menu = self.createCorrectionsMenu(
             self.cursorForMisspelling(pos), menu)
 
@@ -111,13 +40,11 @@ class SpellTextEdit(QPlainTextEdit):
 
     def createCorrectionsMenu(self, cursor, parent=None):
         """Create and return a menu for correcting the selected word."""
-        if not cursor:
+        if not cursor or not self.spelling_provider:
             return None
 
         text = cursor.selectedText()
-        suggests = trim_suggestions(text,
-                                    self.highlighter.dict().suggest(text),
-                                    self.max_suggestions)
+        suggests = self.spelling_provider.suggest(text)
 
         spell_menu = QMenu('Spelling Suggestions', parent)
         for word in suggests:
@@ -131,38 +58,6 @@ class SpellTextEdit(QPlainTextEdit):
             return spell_menu
 
         return None
-
-    def createLanguagesMenu(self, parent=None):
-        """Create and return a menu for selecting the spell-check language."""
-        curr_lang = self.highlighter.dict().tag
-        lang_menu = QMenu("Language", parent)
-        lang_actions = QActionGroup(lang_menu)
-
-        for lang in enchant.list_languages():
-            action = lang_actions.addAction(lang)
-            action.setCheckable(True)
-            action.setChecked(lang == curr_lang)
-            action.setData(lang)
-            lang_menu.addAction(action)
-
-        lang_menu.triggered.connect(self.cb_set_language)
-        return lang_menu
-
-    def createFormatsMenu(self, parent=None):
-        """Create and return a menu for selecting the spell-check language."""
-        fmt_menu = QMenu("Format", parent)
-        fmt_actions = QActionGroup(fmt_menu)
-
-        curr_format = self.highlighter.chunkers()
-        for name, chunkers in (('Text', []), ('HTML', [tokenize.HTMLChunker])):
-            action = fmt_actions.addAction(name)
-            action.setCheckable(True)
-            action.setChecked(chunkers == curr_format)
-            action.setData(chunkers)
-            fmt_menu.addAction(action)
-
-        fmt_menu.triggered.connect(self.cb_set_format)
-        return fmt_menu
 
     def cursorForMisspelling(self, pos):
         """Return a cursor selecting the misspelled word at ``pos`` or ``None``
@@ -196,72 +91,36 @@ class SpellTextEdit(QPlainTextEdit):
         cursor.insertText(word)
         cursor.endEditBlock()
 
-    def cb_set_language(self, action):
-        """Event handler for 'Language' menu entries."""
-        lang = action.data()
-        self.highlighter.setDict(enchant.Dict(lang))
-
-    def cb_set_format(self, action):
-        """Event handler for 'Language' menu entries."""
-        chunkers = action.data()
-        self.highlighter.setChunkers(chunkers)
-        # TODO: Emit an event so this menu can trigger other things
-
-class EnchantHighlighter(QSyntaxHighlighter):
-    """QSyntaxHighlighter subclass which consults a PyEnchant dictionary"""
-    tokenizer = None
-    token_filters = (tokenize.EmailFilter, tokenize.URLFilter)
-
-    # Define the spellcheck style once and just assign it as necessary
-    # XXX: Does QSyntaxHighlighter.setFormat handle keeping this from
-    #      clobbering styles set in the data itself?
+class SpellingHighlighter(QSyntaxHighlighter):
     err_format = QTextCharFormat()
     err_format.setUnderlineColor(Qt.red)
     err_format.setUnderlineStyle(QTextCharFormat.SpellCheckUnderline)
 
-    def __init__(self, *args):
-        QSyntaxHighlighter.__init__(self, *args)
+    def __init__(self, *args, spelling_provider=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sp = None
+        self.spelling_provider = spelling_provider
 
-        # Initialize private members
-        self._sp_dict = None
-        self._chunkers = []
+    @property
+    def spelling_provider(self):
+        return self._sp
 
-    def chunkers(self):
-        """Gets the chunkers in use"""
-        return self._chunkers
-
-    def dict(self):
-        """Gets the spelling dictionary in use"""
-        return self._sp_dict
-
-    def setChunkers(self, chunkers):
-        """Sets the list of chunkers to be used"""
-        self._chunkers = chunkers
-        self.setDict(self.dict())
-        # FIXME: Revert self._chunkers on failure to ensure consistent state
-
-    def setDict(self, sp_dict):
-        """Sets the spelling dictionary to be used"""
-        try:
-            self.tokenizer = tokenize.get_tokenizer(sp_dict.tag,
-                chunkers=self._chunkers, filters=self.token_filters)
-        except TokenizerNotFoundError:
-            # Fall back to the "good for most euro languages" English tokenizer
-            self.tokenizer = tokenize.get_tokenizer(
-                chunkers=self._chunkers, filters=self.token_filters)
-        self._sp_dict = sp_dict
-
+    @spelling_provider.setter
+    def spelling_provider(self, item):
+        if self._sp == item:
+            return
+        self._sp = item
         self.rehighlight()
 
     def highlightBlock(self, text):
         """Overridden QSyntaxHighlighter method to apply the highlight"""
-        if not self._sp_dict:
+        if not self.spelling_provider:
             return
 
         # Build a list of all misspelled words and highlight them
         misspellings = []
-        for (word, pos) in self.tokenizer(text):
-            if not self._sp_dict.check(word):
+        for (word, pos) in self.spelling_provider.tokenize(text):
+            if not self.spelling_provider.check(word):
                 self.setFormat(pos, len(word), self.err_format)
                 misspellings.append((pos, pos + len(word)))
 
