@@ -112,7 +112,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="documentMode">
         <bool>false</bool>
@@ -129,16 +129,7 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QTextBrowser" name="page_view">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-            </font>
-           </property>
-           <property name="openLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
+          <widget class="TWebEngineView" name="page_view" native="true"/>
          </item>
         </layout>
        </widget>
@@ -179,6 +170,12 @@
    <class>MarkdownEditor</class>
    <extends>QWidget</extends>
    <header location="global">tritki.gui.markdown</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TWebEngineView</class>
+   <extends>QWidget</extends>
+   <header location="global">tritki.gui.webview</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

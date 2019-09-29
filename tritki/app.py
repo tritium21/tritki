@@ -1,6 +1,8 @@
+import mimetypes
 import os
 import pathlib
 import sys
+from importlib import resources
 
 import appdirs
 import jinja2
@@ -148,3 +150,12 @@ class App:
     def delete(self, article):
         with self.db.session_scope() as session:
             session.delete(article)
+
+    def static(self, path):
+        with resources.path('tritki.data', 'static') as pth:
+            _path = pathlib.Path(pth).resolve(strict=True) / path.lstrip('/')
+            if not _path.is_file():
+                return
+            mime = mimetypes.guess_type(str(_path))[0]
+            return (mime, _path.read_bytes())
+            

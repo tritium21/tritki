@@ -21,10 +21,21 @@
        <property name="text">
         <string>Title </string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="edit_title"/>
+      <widget class="QLineEdit" name="edit_title">
+       <property name="font">
+        <font>
+         <pointsize>16</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
