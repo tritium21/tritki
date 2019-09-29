@@ -1,3 +1,4 @@
+from functools import partial
 import sys
 
 from PyQt5 import QtWidgets, Qt, QtGui
@@ -19,47 +20,31 @@ class SpellTextEdit(QtWidgets.QPlainTextEdit):
         self.highlighter.spelling_provider = item
 
     def contextMenuEvent(self, event):
-        popup_menu = self.createSpellcheckContextMenu(event.pos())
-        popup_menu.exec_(event.globalPos())
-
-    def createSpellcheckContextMenu(self, pos):
+        pos = event.pos()
         menu = self.createStandardContextMenu(pos)
-        spell_menu = self.createCorrectionsMenu(
-            self.cursorForMisspelling(pos), menu)
-
-        if spell_menu:
+        spell_items = self._get_spelling_items(
+            self._get_spelling_cursor(pos), menu)
+        if spell_items:
             menu.insertSeparator(menu.actions()[0])
-            menu.insertMenu(menu.actions()[0], spell_menu)
+            for item in reversed(spell_items):
+                menu.insertAction(menu.actions()[0], item)
+        menu.exec_(event.globalPos())
 
-        return menu
-
-    def createCorrectionsMenu(self, cursor, parent=None):
-        """Create and return a menu for correcting the selected word."""
+    def _get_spelling_items(self, cursor, parent=None):
         if not cursor or not self.spelling_provider:
             return None
-
         text = cursor.selectedText()
         suggests = self.spelling_provider.suggest(text)
-
-        spell_menu = QtWidgets.QMenu('Spelling Suggestions', parent)
+        spell_items = []
         for word in suggests:
-            action = QtWidgets.QAction(word, spell_menu)
+            action = QtWidgets.QAction(word, parent)
             action.setData((cursor, word))
-            spell_menu.addAction(action)
+            action.triggered.connect(partial(self.cb_correct_word, action))
+            spell_items.append(action)
 
-        # Only return the menu if it's non-empty
-        if spell_menu.actions():
-            spell_menu.triggered.connect(self.cb_correct_word)
-            return spell_menu
+        return spell_items
 
-        return None
-
-    def cursorForMisspelling(self, pos):
-        """Return a cursor selecting the misspelled word at ``pos`` or ``None``
-
-        This leverages the fact that QPlainTextEdit already has a system for
-        processing its contents in limited-size blocks to keep things fast.
-        """
+    def _get_spelling_cursor(self, pos):
         cursor = self.cursorForPosition(pos)
         misspelled_words = getattr(cursor.block().userData(), 'misspelled', [])
 
@@ -78,7 +63,6 @@ class SpellTextEdit(QtWidgets.QPlainTextEdit):
             return None
 
     def cb_correct_word(self, action):  # pylint: disable=no-self-use
-        """Event handler for 'Spelling Suggestions' entries."""
         cursor, word = action.data()
 
         cursor.beginEditBlock()
@@ -108,19 +92,13 @@ class SpellingHighlighter(QtGui.QSyntaxHighlighter):
         self.rehighlight()
 
     def highlightBlock(self, text):
-        """Overridden QSyntaxHighlighter method to apply the highlight"""
         if not self.spelling_provider:
             return
-
-        # Build a list of all misspelled words and highlight them
         misspellings = []
         for (word, pos) in self.spelling_provider.tokenize(text):
             if not self.spelling_provider.check(word):
                 self.setFormat(pos, len(word), self.err_format)
                 misspellings.append((pos, pos + len(word)))
-
-        # Store the list so the context menu can reuse this tokenization pass
-        # (Block-relative values so editing other blocks won't invalidate them)
         data = QtGui.QTextBlockUserData()
         data.misspelled = misspellings
         self.setCurrentBlockUserData(data)
