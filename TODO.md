@@ -12,7 +12,6 @@
 * configurable location for file storage, especially to store the database file.
 * Add media support to database models
   * https://github.com/pylover/sqlalchemy-media
-  * low priority, current view object does not support media.  Semi-major recode to switch to web engine
 
 ## GUI
 
