@@ -4,19 +4,6 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from tritki.gui.alchemical import SqlAlchemyTableModel
 from tritki.models import Article
 
-stylesheet = """
-a.wiki {
-    color: #0000ff;
-}
-a.noexist {
-    color: #ff0000;
-}
-a.external {
-    color: #0000aa;
-    font-style: italic;
-}
-"""
-
 class MListWidget(QtWidgets.QListWidget):
     enterPressed = QtCore.pyqtSignal(QtWidgets.QListWidgetItem)
 

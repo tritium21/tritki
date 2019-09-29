@@ -1,0 +1,10 @@
+a.wiki {
+    color: #0000ff;
+}
+a.noexist {
+    color: #ff0000;
+}
+a.external {
+    color: #0000aa;
+    font-style: italic;
+}
