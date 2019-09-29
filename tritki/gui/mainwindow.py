@@ -1,8 +1,10 @@
 from importlib import resources
 
-from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from tritki.gui.alchemical import SqlAlchemyTableModel
 from tritki.models import Article
+
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
+
 
 class MListWidget(QtWidgets.QListWidget):
     enterPressed = QtCore.pyqtSignal(QtWidgets.QListWidgetItem)

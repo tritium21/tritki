@@ -1,13 +1,8 @@
 import sys
 
-from PyQt5.Qt import Qt
-from PyQt5.QtCore import QEvent
-from PyQt5.QtGui import (QFocusEvent, QSyntaxHighlighter, QTextBlockUserData,
-                         QTextCharFormat, QTextCursor)
-from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QMenu,
-                             QPlainTextEdit)
+from PyQt5 import QtWidgets, Qt, QtGui
 
-class SpellTextEdit(QPlainTextEdit):
+class SpellTextEdit(QtWidgets.QPlainTextEdit):
     def __init__(self, *args, spelling_provider=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._sp = None
@@ -46,9 +41,9 @@ class SpellTextEdit(QPlainTextEdit):
         text = cursor.selectedText()
         suggests = self.spelling_provider.suggest(text)
 
-        spell_menu = QMenu('Spelling Suggestions', parent)
+        spell_menu = QtWidgets.QMenu('Spelling Suggestions', parent)
         for word in suggests:
-            action = QAction(word, spell_menu)
+            action = QtWidgets.QAction(word, spell_menu)
             action.setData((cursor, word))
             spell_menu.addAction(action)
 
@@ -73,8 +68,8 @@ class SpellTextEdit(QPlainTextEdit):
             if start <= cursor.positionInBlock() <= end:
                 block_pos = cursor.block().position()
 
-                cursor.setPosition(block_pos + start, QTextCursor.MoveAnchor)
-                cursor.setPosition(block_pos + end, QTextCursor.KeepAnchor)
+                cursor.setPosition(block_pos + start, QtGui.QTextCursor.MoveAnchor)
+                cursor.setPosition(block_pos + end, QtGui.QTextCursor.KeepAnchor)
                 break
 
         if cursor.hasSelection():
@@ -91,10 +86,10 @@ class SpellTextEdit(QPlainTextEdit):
         cursor.insertText(word)
         cursor.endEditBlock()
 
-class SpellingHighlighter(QSyntaxHighlighter):
-    err_format = QTextCharFormat()
-    err_format.setUnderlineColor(Qt.red)
-    err_format.setUnderlineStyle(QTextCharFormat.SpellCheckUnderline)
+class SpellingHighlighter(QtGui.QSyntaxHighlighter):
+    err_format = QtGui.QTextCharFormat()
+    err_format.setUnderlineColor(Qt.Qt.red)
+    err_format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
 
     def __init__(self, *args, spelling_provider=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -126,14 +121,7 @@ class SpellingHighlighter(QSyntaxHighlighter):
 
         # Store the list so the context menu can reuse this tokenization pass
         # (Block-relative values so editing other blocks won't invalidate them)
-        data = QTextBlockUserData()
+        data = QtGui.QTextBlockUserData()
         data.misspelled = misspellings
         self.setCurrentBlockUserData(data)
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    spellEdit = SpellTextEdit()
-    spellEdit.show()
-
-    sys.exit(app.exec_())
