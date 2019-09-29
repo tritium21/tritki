@@ -6,6 +6,8 @@
   * store list of known wikis
   * store last accessed wiki (currently does, in the jankiest way possible)
   * this is where a file menu starts making sense
+* Implement and `importlib.resources` based Loader for `Jinja2`
+  * https://jinja.palletsprojects.com/en/2.10.x/api/#loaders
 
 ## Storage
 
@@ -18,7 +20,7 @@
 * Rewrite gui and app objects so that gui only interacts with methods directly on the app object.  This will suck.
   * app object grow an all articles method, rewrite model to call that, drop all sqlalchemy specific code
   * add search facilities to the app object, rewire gui to use that instead of the index directly
-* Rewrite `./tritki/gui/alchemical.py` to not use QtSql
+* Rewrite `./tritki/gui/alchemical.py` to not use `QtSql`
 * Autosave edits.
   * Maybe not?
 
