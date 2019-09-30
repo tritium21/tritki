@@ -72,8 +72,9 @@ class SpellTextEdit(QtWidgets.QPlainTextEdit):
 
 class SpellingHighlighter(QtGui.QSyntaxHighlighter):
     err_format = QtGui.QTextCharFormat()
-    err_format.setUnderlineColor(Qt.Qt.red)
-    err_format.setUnderlineStyle(QtGui.QTextCharFormat.SpellCheckUnderline)
+    err_format.setUnderlineColor(QtGui.QColor(255, 0, 0))
+    err_format.setUnderlineStyle(QtGui.QTextCharFormat.WaveUnderline)
+    err_format.setForeground(QtGui.QBrush(QtGui.QColor(QtGui.QColor(255, 192, 192))))
 
     def __init__(self, *args, spelling_provider=None, **kwargs):
         super().__init__(*args, **kwargs)

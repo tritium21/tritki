@@ -74,7 +74,7 @@
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(0, 0, 255);</string>
+        <string notr="true">color: #9797ff;</string>
        </property>
        <property name="text">
         <string>[[Page]]</string>
@@ -89,7 +89,7 @@
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(0, 0, 255);</string>
+        <string notr="true">color: #9797ff;</string>
        </property>
        <property name="text">
         <string>[Text](url)</string>

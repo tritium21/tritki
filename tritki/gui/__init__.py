@@ -1,5 +1,6 @@
 import sys
 
+import qdarkstyle
 from PyQt5 import QtWebEngineWidgets, QtWidgets
 
 from tritki.gui import mainwindow, webview
@@ -11,4 +12,6 @@ def run_gui(app, argv=sys.argv):
     global qtapp
     qtapp = QtWidgets.QApplication(argv)
     window = mainwindow.MainWindow(app)
+    qtapp.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    window.show()
     qtapp.exec_()
