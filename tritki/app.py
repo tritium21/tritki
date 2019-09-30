@@ -41,6 +41,11 @@ else:
 
 class App:
     def __init__(self, *, data_path=None, create=False, qt_args=None):
+        self._html_callbacks = []
+        self._plaintext_callbacks = []
+        self._navigate_callbacks = []
+        self._updated_callbacks = []
+        
         self.global_state = GlobalState()
         self.mainpage = 'Main Page'
         self.jinja_env = jinja2.Environment(
@@ -65,16 +70,13 @@ class App:
             'last_page': self.mainpage,
         }
         if create:
-            self.config['index_path'].mkdir(parents=True)
+            pathlib.Path(self.config['index_path']).mkdir(parents=True)
             self.write_config()
         else:
             self.config.update(self.read_config())
-        self.db = tritki.models.DB(**self.config)
+        self.db = tritki.models.DB(app=self, **self.config)
         if create:
             self.new(self.mainpage)
-        self._html_callbacks = []
-        self._plaintext_callbacks = []
-        self._navigate_callbacks = []
         tritki.gui.run_gui(self, qt_args)
 
     def search(self, term):
@@ -103,11 +105,35 @@ class App:
         if callable(callable_):
             self._navigate_callbacks.append(callable_)
 
+    def register_updated(self, callable_):
+        if callable(callable_):
+            self._updated_callbacks.append(callable_)
+
+    def list_articles(self):
+        return self.db.list_articles()
+
+    def delete(self, article):
+        self.db.delete_article(article)
+
+    def save(self, id, content, title):
+        article = self.db.save(id, content, title)
+        self.update_page(article)
+    
+    def new(self, title):
+        self.db.new(title)
+
+    def exists(self, title):
+        return self.db.exists(title)
+
     def navigate(self, item=None):
         if item is None:
             item = self.config['last_page']
         for callable_ in self._navigate_callbacks:
             callable_(item)
+
+    def updated(self):
+        for callable_ in self._updated_callbacks:
+            callable_()
 
     def change_item(self, item):
         with self.db.session_scope() as session:
@@ -122,34 +148,12 @@ class App:
         for callable_ in self._plaintext_callbacks:
             callable_(article.id, article.content, article.title)        
 
-    def save(self, id, content, title):
-        with self.db.session_scope() as session:
-            article = session.query(Article).filter(Article.id == id).first()
-            article.content = content
-            if article.title != self.mainpage:
-                article.title = title
-        self.update_page(article)
-    
-    def new(self, title):
-        with self.db.session_scope() as session:
-            article = Article()
-            article.title = title
-            article.content = "Write some content"
-            session.add(article)
-
-    def exists(self, name):
-        with self.db.session_scope() as session:
-            return session.query(Article).filter(Article.title == name).scalar() is not None
-
     def render(self, article):
         converted = self.markdown.convert(article.content)
         template = self.jinja_env.get_template('article.html')
         rendered = template.render(title=article.title, content=converted)
         return rendered
 
-    def delete(self, article):
-        with self.db.session_scope() as session:
-            session.delete(article)
 
     def static(self, path):
         with resources.path('tritki.data', 'static') as pth:

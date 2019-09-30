@@ -1,6 +1,7 @@
 from importlib import resources
 
-from tritki.gui.alchemical import SqlAlchemyTableModel
+#from tritki.gui.alchemical import SqlAlchemyTableModel
+from tritki.gui.articlelist import ArticleListModel
 from tritki.models import Article
 
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
@@ -22,27 +23,21 @@ class MainWindow(QtWidgets.QMainWindow):
         with resources.path('tritki.data', 'mainwindow.ui') as pth:
             uic.loadUi(pth, self)
         self._initialize()
-        self.show()
         self.app.navigate()
 
     def _initialize(self):
-        # <temporary!>
-        self.article_viewport.setTabEnabled(
-            2,
-            False,
-        )
-        # </temporary!>
         self.app.register_html(self.set_html)
         self.app.register_plaintext(self.set_plaintext)
         self.app.register_navigate(self.navigate)
         self.edit_tab.spelling_provider = self.app.spelling_provider
-        self.article_list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self._model = model = SqlAlchemyTableModel(
-            self.app.db.session,  # Need to fix this - too coupled
-            Article,  # and this.
-            [("Title", Article.title, "title", {})],
-        )
+        # self._model = model = SqlAlchemyTableModel(
+        #     self.app.db.session,  # Need to fix this - too coupled
+        #     Article,  # and this.
+        #     [("Title", Article.title, "title", {})],
+        # )
+        self._model = model = ArticleListModel(app=self.app)
         self.article_list.setModel(model)
+        self.article_list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self._selmodel = self.article_list.selectionModel()
         self._selmodel.selectionChanged.connect(self.selection_changed)
         self.page_view.linkClicked.connect(self.link_clicked)
@@ -55,6 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def save(self, content, title):
         self.app.save(self._current_page, content, title)
+        self.switch_view()
 
     # Article list methods
     def search_articles(self):
@@ -83,7 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
         clear_button.clicked.connect(reset)
         search_list.itemDoubleClicked.connect(item_clicked)
         search_list.enterPressed.connect(item_clicked)
-        search_list.setStyleSheet("MListWidget {background-color: Gainsboro};");
+        search_list.setStyleSheet("MListWidget {background-color: Black};");
 
         # this is where search sits!
         text = search_text.text()
@@ -108,7 +104,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self._selmodel.hasSelection():
             return
         index = self._selmodel.currentIndex()
-        item = self._model.get_item(index)
+        #item = self._model.get_item(index)
+        item = self._model.data(index, QtCore.Qt.UserRole)
         if item.title == self.app.mainpage:
             return
         mbox = QtWidgets.QMessageBox(
@@ -121,7 +118,6 @@ class MainWindow(QtWidgets.QMainWindow):
         retval = mbox.exec_()
         if retval == QtWidgets.QMessageBox.Yes:
             self.app.delete(item)
-            self._model.refresh()
         else:
             return
         if not self._selmodel.hasSelection():
@@ -159,7 +155,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.article_viewport.setCurrentWidget(widget)
 
     def navigate(self, item):
-        index = self._model.get_index(item)
+        #index = self._model.get_index(item)
+        index = self._model.map(item)
         self._selmodel.select(index, self._selmodel.ClearAndSelect)
 
     def selection_changed(self, new, old):
@@ -186,7 +183,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.app.navigate(target)
         elif scheme == 'edit':
             self.app.new(target)
-            self._model.refresh()
             self.app.navigate(target)
             self.switch_view('edit')
 

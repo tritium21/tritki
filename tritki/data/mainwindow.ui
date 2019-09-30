@@ -112,7 +112,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="documentMode">
         <bool>false</bool>
@@ -137,16 +137,6 @@
         <attribute name="title">
          <string>Edit</string>
         </attribute>
-       </widget>
-       <widget class="QWidget" name="history_tab">
-        <attribute name="title">
-         <string>History</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QListView" name="page_history"/>
-         </item>
-        </layout>
        </widget>
       </widget>
      </widget>

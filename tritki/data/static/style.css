@@ -1,10 +1,31 @@
-a.wiki {
-    color: #0000ff;
+body {
+    background-color: #19232D;
+    color: #F0F0F0;
+    font-size: 1.2em;
+}
+
+::-webkit-scrollbar {
+    width: 15px;
+    background:rgba(25, 35, 45, 1);
+}
+
+/*::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(25, 35, 45, 1); 
+    border-radius: 15px;
+}*/
+
+::-webkit-scrollbar-thumb {
+    /*border-radius: 15px;*/
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+    background: rgb(50, 65, 75);
+} 
+
+a {
+    color: #9797ff;
 }
 a.noexist {
-    color: #ff0000;
+    color: #fcc067ce;
 }
 a.external {
-    color: #0000aa;
     font-style: italic;
 }
